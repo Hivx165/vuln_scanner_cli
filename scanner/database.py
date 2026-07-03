@@ -50,3 +50,55 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+def add_target(target_str):
+    """Thêm mục tiêu mới vào bảng targets. Nếu đã có thì bỏ qua."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Dùng INSERT OR IGNORE để tránh lỗi sập app nếu IP đã tồn tại (UNIQUE)
+    cursor.execute('INSERT OR IGNORE INTO targets (target_str) VALUES (?)', (target_str,))
+    conn.commit()
+    
+    # Lấy ID của mục tiêu này (dù vừa thêm mới hay đã có từ trước)
+    cursor.execute('SELECT id FROM targets WHERE target_str = ?', (target_str,))
+    target_id = cursor.fetchone()['id']
+    
+    conn.close()
+    return target_id
+
+def create_scan(target_id, status="RUNNING"):
+    """Tạo một phiên quét mới và trả về ID của phiên đó."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('INSERT INTO scans (target_id, status) VALUES (?, ?)', (target_id, status))
+    conn.commit()
+    scan_id = cursor.lastrowid
+    
+    conn.close()
+    return scan_id
+
+def get_history(target_str=None):
+    """Lấy lịch sử quét. Nếu truyền target_str thì chỉ lấy của IP đó."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    query = '''
+        SELECT targets.target_str, scans.id as scan_id, scans.status, scans.scan_date 
+        FROM scans 
+        JOIN targets ON scans.target_id = targets.id
+    '''
+    params = ()
+    
+    if target_str:
+        query += ' WHERE targets.target_str = ?'
+        params = (target_str,)
+        
+    query += ' ORDER BY scans.scan_date DESC'
+    
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [dict(row) for row in rows]
