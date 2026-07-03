@@ -1,7 +1,10 @@
 import sys
 from scanner.cli import setup_parser
+from scanner.database import init_db
 
 def main():
+    init_db()
+
     parser = setup_parser()
     args = parser.parse_args()
 
@@ -11,6 +14,7 @@ def main():
 
     if args.command == "scan":
         print(f"[*] Initiating target scan: {args.target} ({args.type})")
+        
     elif args.command == "history":
         print(f"[*] Retrieving history for: {args.target if args.target else 'All'}")
 
