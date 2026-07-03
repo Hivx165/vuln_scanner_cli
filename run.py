@@ -4,7 +4,7 @@ from scanner.database import init_db, add_target, create_scan, get_history, upda
 from scanner.reporter import print_scan_results, export_to_json, export_to_csv
 from scanner.engine import run_nmap, parse_nmap_xml, assess_severity
 
-# Nạp khiên bảo vệ
+# Chống OS Command Injection bằng cách kiểm tra input
 from scanner.utils import is_valid_target
 
 def main():
@@ -17,12 +17,11 @@ def main():
         sys.exit(1)
 
     if args.command == "scan":
-        # ================= LÁ CHẮN BẢO MẬT =================
+        # Xác thực input trước khi truyền cho subprocess
         if not is_valid_target(args.target):
             print(f"[-] LỖI BẢO MẬT: Mục tiêu '{args.target}' không hợp lệ!")
             print("    Hệ thống chỉ chấp nhận địa chỉ IP (VD: 192.168.1.1) hoặc Domain (VD: example.com).")
-            sys.exit(1) # Bắt buộc thoát chương trình ngay lập tức
-        # ===================================================
+            sys.exit(1)
 
         print(f"[*] Đang khởi chạy tiến trình quét mục tiêu: {args.target} ({args.type})")
         target_id = add_target(args.target)

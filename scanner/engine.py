@@ -1,32 +1,29 @@
 import subprocess
-import xml.etree.ElementTree as ET # Thư viện Parser tích hợp sẵn của Python
+import xml.etree.ElementTree as ET
 
 def run_nmap(target, scan_type="quick"):
     """
-    Gọi tiến trình Nmap dưới tầng hệ điều hành.
-    Thay vì xuất ra file .xml, chúng ta ép Nmap xuất XML thẳng ra màn hình (stdout) 
-    để Python bắt lấy ngay lập tức, không để lại "rác" trên ổ cứng.
+    Gọi Nmap qua subprocess và nhận kết quả XML từ stdout.
+    Tránh tạo file tạm thời trên ổ cứng để tăng tốc độ và bảo mật.
     """
     if scan_type == "quick":
-        # -F: Fast mode (Quét 100 port phổ biến nhất)
-        # -T4: Timing template (Tăng tốc độ quét)
-        # -oX - : Xuất XML thẳng ra luồng tiêu chuẩn (stdout)
+        # Quét 100 port phổ biến nhất với timing aggressive
         nmap_args = ["nmap", "-F", "-T4", "-oX", "-", target]
     else:
-        # -sV: Quét sâu để lấy phiên bản dịch vụ (Service Version)
+        # Quét sâu hơn với xác định phiên bản dịch vụ
         nmap_args = ["nmap", "-sV", "-T4", "-oX", "-", target]
 
     print(f"[>] Đang gọi tiến trình OS: {' '.join(nmap_args)}")
 
     try:
-        # Kích hoạt subprocess chạy ngầm lệnh Linux
+        # Chạy Nmap và bắt output XML
         result = subprocess.run(
             nmap_args,
-            capture_output=True, # Bắt lại những gì Nmap in ra
-            text=True,           # Chuyển dữ liệu nhị phân thành chuỗi (String)
-            check=True           # Tự văng lỗi nếu câu lệnh xịt (VD: gõ sai IP)
+            capture_output=True,
+            text=True,
+            check=True
         )
-        return result.stdout # Trả về toàn bộ cục dữ liệu XML
+        return result.stdout
 
     except FileNotFoundError:
         print("[-] Lỗi: Không tìm thấy trình quét Nmap trên hệ thống Linux này.")
@@ -36,28 +33,26 @@ def run_nmap(target, scan_type="quick"):
         return None
 
 def parse_nmap_xml(xml_string):
-    """Mổ xẻ chuỗi XML thô, trích xuất danh sách các cổng đang MỞ."""
+    """Trích xuất danh sách cổng mở từ XML của Nmap."""
     open_ports = []
     if not xml_string:
         return open_ports
     
     try:
-        # Biến chuỗi text thành một cây cấu trúc XML
+        # Parse XML string thành cây cấu trúc
         root = ET.fromstring(xml_string)
         
-        # Lùng sục tìm tất cả các thẻ <port> trong dữ liệu
+        # Lặp qua các cổng, chỉ lấy cổng mở
         for port_element in root.findall('.//port'):
             state = port_element.find('state')
-            # Nếu cổng đang mở thì mới quan tâm
             if state is not None and state.get('state') == 'open':
                 port_id = int(port_element.get('portid'))
                 
-                # Cố gắng lấy tên dịch vụ (HTTP, SSH, FTP...)
+                # Trích xuất tên dịch vụ và phiên bản nếu có
                 service_element = port_element.find('service')
                 service_name = "unknown"
                 if service_element is not None:
                     service_name = service_element.get('name', 'unknown')
-                    # Nếu có phiên bản (version) thì gắp luôn
                     version = service_element.get('version', '')
                     if version:
                         service_name = f"{service_name} ({version})"
@@ -72,14 +67,11 @@ def parse_nmap_xml(xml_string):
     return open_ports
 
 def assess_severity(port):
-    """
-    Nội suy mức độ nguy hiểm dựa trên số cổng. 
-    (Luồng DevSecOps Triage cơ bản).
-    """
-    # Các cổng quản trị từ xa thường bị Hacker nhắm tới đầu tiên
-    critical_ports = [21, 22, 23, 3389, 445, 139] # FTP, SSH, Telnet, RDP, SMB
+    """Đánh giá mức độ rủi ro dựa trên số cổng (heuristic đơn giản)."""
+    # Cổng quản trị từ xa - mục tiêu ưu tiên của attacker
+    critical_ports = [21, 22, 23, 3389, 445, 139]
     
-    # Các cổng dịch vụ web và Database (Dễ bị SQLi, XSS)
+    # Cổng web và database - dễ bị tấn công ứng dụng (SQLi, XSS)
     high_ports = [80, 443, 8080, 8443, 3306, 5432, 27017] 
     
     if port in critical_ports:

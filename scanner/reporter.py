@@ -2,7 +2,7 @@ import json
 import csv
 
 def print_scan_results(target, open_ports, scan_id):
-    """Vẽ bảng ASCII kết quả quét đen trắng bằng Python thuần"""
+    """Hiển thị kết quả quét dạng bảng ASCII cho dễ đọc."""
     print(f"\n[+] KẾT QUẢ QUÉT BẢO MẬT: {target} (Scan ID: {scan_id})")
     print("-" * 65)
     print(f"{'Cổng (Port)':<15} | {'Dịch vụ (Service)':<25} | {'Mức độ (Severity)':<15}")
@@ -19,16 +19,14 @@ def print_scan_results(target, open_ports, scan_id):
     print("\n")
 
 def export_to_json(data, filename="report.json"):
-    """Xuất dữ liệu ra file JSON (Chuẩn DevSecOps CI/CD)"""
+    """Xuất dữ liệu ra file JSON để tích hợp với pipeline CI/CD."""
     with open(filename, 'w', encoding='utf-8') as f:
-        # dump dictionary thành json string với độ thụt lề (indent) là 4 cho đẹp
         json.dump(data, f, indent=4, ensure_ascii=False)
     print(f"[+] Dữ liệu đã được nén thành công vào: {filename}")
 
 def export_to_csv(data, filename="report.csv"):
-    """Xuất dữ liệu ra file CSV (Chuẩn Excel cho Quản lý)"""
+    """Xuất dữ liệu ra file CSV để mở trong Excel hoặc GSheets."""
     with open(filename, 'w', newline='', encoding='utf-8') as f:
-        # Lấy tên các cột từ khóa (keys) của phần tử đầu tiên
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader()
         writer.writerows(data)
