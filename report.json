@@ -1,0 +1,44 @@
+[
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:35:00",
+        "port": 631,
+        "service": "ipp",
+        "severity": "Medium"
+    },
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:35:00",
+        "port": 5432,
+        "service": "postgresql",
+        "severity": "High"
+    },
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:32:59",
+        "port": 631,
+        "service": "ipp",
+        "severity": "Medium"
+    },
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:32:59",
+        "port": 5432,
+        "service": "postgresql",
+        "severity": "High"
+    },
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:24:58",
+        "port": 631,
+        "service": "ipp",
+        "severity": "Medium"
+    },
+    {
+        "target": "127.0.0.1",
+        "scan_date": "2026-07-03 20:24:58",
+        "port": 5432,
+        "service": "postgresql",
+        "severity": "High"
+    }
+]

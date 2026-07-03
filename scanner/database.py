@@ -102,3 +102,44 @@ def get_history(target_str=None):
     conn.close()
     
     return [dict(row) for row in rows]
+
+def update_scan_status(scan_id, status):
+    """Cập nhật trạng thái của phiên quét (Ví dụ: RUNNING -> COMPLETED)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE scans SET status = ? WHERE id = ?', (status, scan_id))
+    conn.commit()
+    conn.close()
+
+def add_vulnerability(scan_id, port, service, severity):
+    """Lưu thông tin cổng đang mở (nguy cơ tiềm ẩn) vào DB."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO vulnerabilities (scan_id, port, service, severity)
+        VALUES (?, ?, ?, ?)
+    ''', (scan_id, port, service, severity))
+    conn.commit()
+    conn.close()
+
+def get_all_vulnerabilities():
+    """Lấy toàn bộ dữ liệu lỗ hổng đã quét được để xuất báo cáo."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # JOIN 3 bảng lại với nhau để lấy thông tin đầy đủ nhất
+    query = '''
+        SELECT targets.target_str as target, scans.scan_date, 
+               vulnerabilities.port, vulnerabilities.service, vulnerabilities.severity
+        FROM vulnerabilities
+        JOIN scans ON vulnerabilities.scan_id = scans.id
+        JOIN targets ON scans.target_id = targets.id
+        ORDER BY scans.scan_date DESC
+    '''
+    
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    # Chuyển dữ liệu SQLite thành danh sách Dictionary chuẩn của Python
+    return [dict(row) for row in rows]
