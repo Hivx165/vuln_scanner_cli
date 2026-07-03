@@ -1,7 +1,0 @@
-target,scan_date,port,service,severity
-127.0.0.1,2026-07-03 20:35:00,631,ipp,Medium
-127.0.0.1,2026-07-03 20:35:00,5432,postgresql,High
-127.0.0.1,2026-07-03 20:32:59,631,ipp,Medium
-127.0.0.1,2026-07-03 20:32:59,5432,postgresql,High
-127.0.0.1,2026-07-03 20:24:58,631,ipp,Medium
-127.0.0.1,2026-07-03 20:24:58,5432,postgresql,High
