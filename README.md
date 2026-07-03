@@ -10,9 +10,9 @@ Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, 
 - **Kiểm duyệt đầu vào:** Tích hợp bộ lọc Regex bảo vệ hệ thống khỏi các cuộc tấn công OS Command Injection.
 - **Trích xuất báo cáo:** Hỗ trợ xuất dữ liệu ra định dạng `JSON` (cho CI/CD) hoặc `CSV` (cho báo cáo quản lý).
 
-## Yêu cầu hệ thống
+## hệ thống
 
-- Hệ điều hành: Linux (Khuyến nghị Ubuntu 24.04).
+- Hệ điều hành: Linux 
 - Công cụ lõi: Cài đặt sẵn `nmap` ở tầng hệ điều hành.
 - Ngôn ngữ: Python 3.
 
