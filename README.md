@@ -1,4 +1,4 @@
-# 🛡️ DevSecOps Automated Vulnerability Scanner (CLI)
+# Automated Vulnerability Scanner (CLI)
 
 Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, được thiết kế tối giản trên giao diện dòng lệnh (CLI). Dự án tập trung vào tính cơ động, không phụ thuộc vào máy chủ ngoại vi và phù hợp để tích hợp vào các luồng kiểm thử liên tục (CI/CD Pipeline).
 
@@ -10,7 +10,7 @@ Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, 
 - **Kiểm duyệt đầu vào:** Tích hợp bộ lọc Regex bảo vệ hệ thống khỏi các cuộc tấn công OS Command Injection.
 - **Trích xuất báo cáo:** Hỗ trợ xuất dữ liệu ra định dạng `JSON` (cho CI/CD) hoặc `CSV` (cho báo cáo quản lý).
 
-## ⚙️ Yêu cầu hệ thống
+## Yêu cầu hệ thống
 
 - Hệ điều hành: Linux (Khuyến nghị Ubuntu 24.04).
 - Công cụ lõi: Cài đặt sẵn `nmap` ở tầng hệ điều hành.
