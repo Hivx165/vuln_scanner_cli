@@ -1,82 +1,68 @@
 import subprocess
 import xml.etree.ElementTree as ET
+import re
 
 def run_nmap(target, scan_type="quick"):
-    """
-    Gọi Nmap qua subprocess và nhận kết quả XML từ stdout.
-    Tránh tạo file tạm thời trên ổ cứng để tăng tốc độ và bảo mật.
-    """
+    """Thực thi Nmap qua subprocess"""
     if scan_type == "quick":
-        # Quét 100 port phổ biến nhất với timing aggressive
-        nmap_args = ["nmap", "-F", "-T4", "-oX", "-", target]
+        # Quét nhanh không check CVE
+        nmap_args = ["nmap", "-Pn", "-F", "-T4", "-oX", "-", target]
     else:
-        # Quét sâu hơn với xác định phiên bản dịch vụ
-        nmap_args = ["nmap", "-sV", "-T4", "-oX", "-", target]
-
-    print(f"[>] Đang gọi tiến trình OS: {' '.join(nmap_args)}")
+        # Quét toàn diện, kích hoạt thư viện lỗ hổng NSE
+        nmap_args = ["nmap", "-Pn", "-sV", "--script", "vuln", "-T4", "-oX", "-", target]
 
     try:
-        # Chạy Nmap và bắt output XML
-        result = subprocess.run(
-            nmap_args,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(nmap_args, capture_output=True, text=True, check=True)
         return result.stdout
-
-    except FileNotFoundError:
-        print("[-] Lỗi: Không tìm thấy trình quét Nmap trên hệ thống Linux này.")
-        return None
     except subprocess.CalledProcessError as e:
-        print(f"[-] Tiến trình Nmap thất bại. Lỗi: {e.stderr.strip()}")
+        print(f"[-] Nmap error: {e}")
         return None
 
-def parse_nmap_xml(xml_string):
-    """Trích xuất danh sách cổng mở từ XML của Nmap."""
+def parse_nmap_xml(xml_data):
+    """Bóc tách XML lấy Port, Service, CVE và CVSS"""
+    root = ET.fromstring(xml_data)
     open_ports = []
-    if not xml_string:
-        return open_ports
     
-    try:
-        # Parse XML string thành cây cấu trúc
-        root = ET.fromstring(xml_string)
-        
-        # Lặp qua các cổng, chỉ lấy cổng mở
-        for port_element in root.findall('.//port'):
+    for host in root.findall('host'):
+        for port_element in host.findall('.//port'):
             state = port_element.find('state')
             if state is not None and state.get('state') == 'open':
                 port_id = int(port_element.get('portid'))
-                
-                # Trích xuất tên dịch vụ và phiên bản nếu có
                 service_element = port_element.find('service')
-                service_name = "unknown"
-                if service_element is not None:
-                    service_name = service_element.get('name', 'unknown')
-                    version = service_element.get('version', '')
-                    if version:
-                        service_name = f"{service_name} ({version})"
-                        
+                service_name = service_element.get('name') if service_element is not None else 'unknown'
+                
+                # Truy quét CVE và CVSS từ script output bằng Regex
+                cve_data = []
+                for script in port_element.findall('script'):
+                    output = script.get('output', '')
+                    # Bắt chuỗi dạng CVE-YYYY-XXXX và số điểm thập phân
+                    matches = re.findall(r'(CVE-\d{4}-\d+).*?(\d+\.\d+)', output)
+                    if matches:
+                        cve_data.extend(matches)
+                
+                # Chọn CVE có điểm CVSS cao nhất nếu có nhiều lỗ hổng
+                if cve_data:
+                    cve_data.sort(key=lambda x: float(x[1]), reverse=True)
+                    top_cve = cve_data[0][0]
+                    top_cvss = cve_data[0][1]
+                else:
+                    top_cve = "N/A"
+                    top_cvss = "N/A"
+
                 open_ports.append({
                     'port': port_id,
-                    'service': service_name
+                    'service': service_name,
+                    'cve_id': top_cve,
+                    'cvss_score': top_cvss
                 })
-    except ET.ParseError:
-        print("[-] Lỗi: Cấu trúc XML bị hỏng hoặc Nmap trả về dữ liệu rác.")
-        
     return open_ports
 
 def assess_severity(port):
-    """Đánh giá mức độ rủi ro dựa trên số cổng (heuristic đơn giản)."""
-    # Cổng quản trị từ xa - mục tiêu ưu tiên của attacker
-    critical_ports = [21, 22, 23, 3389, 445, 139]
-    
-    # Cổng web và database - dễ bị tấn công ứng dụng (SQLi, XSS)
-    high_ports = [80, 443, 8080, 8443, 3306, 5432, 27017] 
-    
+    """Đánh giá rủi ro cơ sở theo nhóm cổng (Sẽ bị ghi đè nếu có CVSS)"""
+    critical_ports = [22, 23, 3389]
+    high_ports = [80, 443, 8080, 3306, 5432]
     if port in critical_ports:
         return "Critical"
     elif port in high_ports:
         return "High"
-    else:
-        return "Medium"
+    return "Medium"

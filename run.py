@@ -19,11 +19,10 @@ def main():
     if args.command == "scan":
         # Xác thực input trước khi truyền cho subprocess
         if not is_valid_target(args.target):
-            print(f"[-] LỖI BẢO MẬT: Mục tiêu '{args.target}' không hợp lệ!")
-            print("    Hệ thống chỉ chấp nhận địa chỉ IP (VD: 192.168.1.1) hoặc Domain (VD: example.com).")
+            print(f"LỖI : target '{args.target}' không hợp lệ!")
             sys.exit(1)
 
-        print(f"[*] Đang khởi chạy tiến trình quét mục tiêu: {args.target} ({args.type})")
+        print(f"[*] Khởi chạy quét target: {args.target} ({args.type})")
         target_id = add_target(args.target)
         scan_id = create_scan(target_id, status="RUNNING")
         
@@ -31,7 +30,7 @@ def main():
         
         if xml_output:
             open_ports = parse_nmap_xml(xml_output)
-            print(f"[+] Thu thập hoàn tất. Đang phân tích rủi ro...")
+            print(f"Thu thập đã xong. Tiến hành phân tích nguy cơ")
             
             for p in open_ports:
                 p['severity'] = assess_severity(p['port'])
@@ -40,7 +39,7 @@ def main():
             print_scan_results(args.target, open_ports, scan_id)
             
             update_scan_status(scan_id, "COMPLETED")
-            print("[+] Đã lưu toàn bộ báo cáo vào cơ sở dữ liệu cục bộ!")
+            print("Đã lưu toàn bộ báo cáo vào cơ sở dữ liệu cục bộ!")
         else:
             update_scan_status(scan_id, "FAILED")
             print("[-] Quét thất bại hoặc mục tiêu không phản hồi.")

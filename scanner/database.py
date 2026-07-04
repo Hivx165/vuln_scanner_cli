@@ -1,42 +1,34 @@
 import sqlite3
-import os
+from datetime import datetime
 
-# Lưu database tại thư mục gốc để dễ truy cập và di chuyển
-DB_FILE = "vuln_data.db"
+DB_NAME = "vuln_data.db"
 
 def get_connection():
-    """Tạo kết nối SQLite trả về dữ liệu dạng từ điển."""
-    conn = sqlite3.connect(DB_FILE)
-    # Trả về hàng dữ liệu dưới dạng dictionary để dễ truy cập
-    conn.row_factory = sqlite3.Row 
-    return conn
+    return sqlite3.connect(DB_NAME)
 
 def init_db():
-    """Khởi tạo schema database khi chạy lần đầu."""
+    """Khởi tạo cơ sở dữ liệu với 3 bảng, bổ sung cột CVE và CVSS"""
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Tránh lưu trùng lặp mục tiêu
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS targets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            target_str TEXT UNIQUE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            target_str TEXT UNIQUE NOT NULL
         )
     ''')
-
-    # Theo dõi hoạt động quét liên kết với các mục tiêu
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS scans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             target_id INTEGER,
+            scan_date TEXT,
             status TEXT,
-            scan_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (target_id) REFERENCES targets (id)
+            FOREIGN KEY(target_id) REFERENCES targets(id)
         )
     ''')
     
-    # Ghi lại lỗ hổng và cổng mở được phát hiện từ mỗi lần quét
+    # Bảng này đã được thêm cột cve_id và cvss_score
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS vulnerabilities (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,56 +36,67 @@ def init_db():
             port INTEGER,
             service TEXT,
             severity TEXT,
-            FOREIGN KEY (scan_id) REFERENCES scans (id)
+            cve_id TEXT,
+            cvss_score TEXT,
+            FOREIGN KEY(scan_id) REFERENCES scans(id)
         )
     ''')
-
+    
     conn.commit()
     conn.close()
 
 def add_target(target_str):
-    """Thêm mục tiêu mới vào bảng targets. Nếu đã có thì bỏ qua."""
     conn = get_connection()
     cursor = conn.cursor()
-    
-    # Dùng INSERT OR IGNORE để tránh lỗi sập app nếu IP đã tồn tại (UNIQUE)
     cursor.execute('INSERT OR IGNORE INTO targets (target_str) VALUES (?)', (target_str,))
-    conn.commit()
-    
-    # Lấy ID của mục tiêu này (dù vừa thêm mới hay đã có từ trước)
     cursor.execute('SELECT id FROM targets WHERE target_str = ?', (target_str,))
-    target_id = cursor.fetchone()['id']
-    
+    target_id = cursor.fetchone()[0]
+    conn.commit()
     conn.close()
     return target_id
 
-def create_scan(target_id, status="RUNNING"):
-    """Tạo một phiên quét mới và trả về ID của phiên đó."""
+def create_scan(target_id, status="PENDING"):
     conn = get_connection()
     cursor = conn.cursor()
-    
-    cursor.execute('INSERT INTO scans (target_id, status) VALUES (?, ?)', (target_id, status))
-    conn.commit()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute('INSERT INTO scans (target_id, scan_date, status) VALUES (?, ?, ?)', (target_id, now, status))
     scan_id = cursor.lastrowid
-    
+    conn.commit()
     conn.close()
     return scan_id
 
-def get_history(target_str=None):
-    """Lấy lịch sử quét. Nếu truyền target_str thì chỉ lấy của IP đó."""
+def update_scan_status(scan_id, status):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE scans SET status = ? WHERE id = ?', (status, scan_id))
+    conn.commit()
+    conn.close()
+
+# Cập nhật hàm này để nhận thêm tham số CVE và CVSS
+def add_vulnerability(scan_id, port, service, severity, cve_id="N/A", cvss_score="N/A"):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO vulnerabilities (scan_id, port, service, severity, cve_id, cvss_score)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (scan_id, port, service, severity, cve_id, cvss_score))
+    conn.commit()
+    conn.close()
+
+def get_history(target_filter=None):
     conn = get_connection()
     cursor = conn.cursor()
     
     query = '''
-        SELECT targets.target_str, scans.id as scan_id, scans.status, scans.scan_date 
-        FROM scans 
+        SELECT scans.id as scan_id, targets.target_str, scans.scan_date, scans.status
+        FROM scans
         JOIN targets ON scans.target_id = targets.id
     '''
     params = ()
     
-    if target_str:
+    if target_filter:
         query += ' WHERE targets.target_str = ?'
-        params = (target_str,)
+        params = (target_filter,)
         
     query += ' ORDER BY scans.scan_date DESC'
     
@@ -101,45 +104,30 @@ def get_history(target_str=None):
     rows = cursor.fetchall()
     conn.close()
     
-    return [dict(row) for row in rows]
+    result = []
+    for row in rows:
+        result.append({
+            'scan_id': row[0],
+            'target_str': row[1],
+            'scan_date': row[2],
+            'status': row[3]
+        })
+    return result
 
-def update_scan_status(scan_id, status):
-    """Cập nhật trạng thái của phiên quét (Ví dụ: RUNNING -> COMPLETED)."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('UPDATE scans SET status = ? WHERE id = ?', (status, scan_id))
-    conn.commit()
-    conn.close()
-
-def add_vulnerability(scan_id, port, service, severity):
-    """Lưu thông tin cổng đang mở (nguy cơ tiềm ẩn) vào DB."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO vulnerabilities (scan_id, port, service, severity)
-        VALUES (?, ?, ?, ?)
-    ''', (scan_id, port, service, severity))
-    conn.commit()
-    conn.close()
-
+# Hàm lấy toàn bộ dữ liệu (cập nhật query lấy thêm CVE/CVSS)
 def get_all_vulnerabilities():
-    """Lấy toàn bộ dữ liệu lỗ hổng đã quét được để xuất báo cáo."""
     conn = get_connection()
     cursor = conn.cursor()
-    
-    # JOIN 3 bảng lại với nhau để lấy thông tin đầy đủ nhất
     query = '''
         SELECT targets.target_str as target, scans.scan_date, 
-               vulnerabilities.port, vulnerabilities.service, vulnerabilities.severity
+               vulnerabilities.port, vulnerabilities.service, 
+               vulnerabilities.severity, vulnerabilities.cve_id, vulnerabilities.cvss_score
         FROM vulnerabilities
         JOIN scans ON vulnerabilities.scan_id = scans.id
         JOIN targets ON scans.target_id = targets.id
         ORDER BY scans.scan_date DESC
     '''
-    
     cursor.execute(query)
     rows = cursor.fetchall()
     conn.close()
-    
-    # Chuyển dữ liệu SQLite thành danh sách Dictionary chuẩn của Python
     return [dict(row) for row in rows]

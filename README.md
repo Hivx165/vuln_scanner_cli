@@ -1,26 +1,26 @@
-# Automated Vulnerability Scanner (CLI)
+#Automated Vulnerability Scanner (CLI)
 
-Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, được thiết kế tối giản trên giao diện dòng lệnh (CLI). Dự án tập trung vào tính cơ động, không phụ thuộc vào máy chủ ngoại vi và phù hợp để tích hợp vào các luồng kiểm thử liên tục (CI/CD Pipeline).
+Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, được thiết kế tối giản trên giao diện dòng lệnh (CLI). Dự án tập trung vào tính cơ động, khả năng tích hợp luồng kiểm thử liên tục (CI/CD Pipeline) và khả năng trích xuất dữ liệu lỗ hổng chuẩn quốc tế (Threat Intelligence).
 
-## Tính năng cốt lõi
+## Tính năng nổi bật
 
-- **Quét tự động:** Kích hoạt ngầm tiến trình `nmap`, tự động thu thập thông tin cổng mở và phiên bản dịch vụ.
-- **Đánh giá rủi ro (Triage):** Tự động bóc tách dữ liệu XML và gán nhãn mức độ nghiêm trọng (Low, Medium, High, Critical).
-- **Lưu trữ Offline:** Ghi nhận toàn bộ lịch sử quét vào cơ sở dữ liệu `SQLite` nhúng trực tiếp, hoạt động hoàn hảo trong mạng cách ly (Air-gapped).
-- **Kiểm duyệt đầu vào:** Tích hợp bộ lọc Regex bảo vệ hệ thống khỏi các cuộc tấn công OS Command Injection.
-- **Trích xuất báo cáo:** Hỗ trợ xuất dữ liệu ra định dạng `JSON` (cho CI/CD) hoặc `CSV` (cho báo cáo quản lý).
+* **Rà quét Bề mặt & Vượt tường lửa:** Tự động nhận diện cổng mở và phiên bản dịch vụ. Tích hợp cơ chế bỏ qua Ping (`-Pn`) để vượt qua các tường lửa cấu hình ẩn danh (Stealth mode).
+* **Threat Intelligence (CVE & CVSS):** Tích hợp Nmap Scripting Engine (NSE) để thực hiện Active Probing, tự động bóc tách và đối chiếu phiên bản phần mềm để lấy mã định danh lỗ hổng quốc tế (CVE ID) và điểm rủi ro (CVSS Score).
+* **Đánh giá rủi ro (Triage):** Tự động phân tích dữ liệu XML trong RAM, gán nhãn rủi ro (Critical, High, Medium) dựa trên điểm CVSS động hoặc ánh xạ cổng tĩnh.
+* **Lưu trữ Offline an toàn:** Sử dụng cơ sở dữ liệu `SQLite` nhúng trực tiếp, giúp hệ thống hoạt động độc lập 100% trong môi trường mạng cách ly (Air-gapped) mà không cần máy chủ ngoại vi.
+* **Bảo vệ hệ thống (Defensive Design):** Tích hợp bộ lọc Strict Input Validation bằng Regex, chặn đứng mọi nỗ lực tấn công OS Command Injection từ phía người dùng.
+* **CI/CD Readiness:** Xuất báo cáo cấu trúc chuẩn `JSON` phục vụ tự động hóa DevSecOps và `CSV` phục vụ báo cáo quản lý.
 
-## hệ thống
+## ⚙️ Yêu cầu hệ thống
 
-- Hệ điều hành: Linux 
-- Công cụ lõi: Cài đặt sẵn `nmap` ở tầng hệ điều hành.
-- Ngôn ngữ: Python 3.
+* **Hệ điều hành:** Linux (Khuyến nghị Ubuntu 24.04).
+* **Công cụ lõi:** Cài đặt sẵn `nmap` ở tầng hệ điều hành.
+* **Ngôn ngữ:** Python 3.10+ (Chỉ sử dụng Standard Library, không cần `pip install` thư viện ngoài).
 
-## Cài đặt
+## 🛠️ Cài đặt
 
-Clone kho lưu trữ và chạy trực tiếp không cần cài đặt các thư viện bên ngoài (Sử dụng 100% Python Standard Library).
+Clone kho lưu trữ và sử dụng trực tiếp:
 
-```bash
 git clone https://github.com/Hivx165/vuln_scanner_cli.git
 cd vuln_scanner_cli
 ```
