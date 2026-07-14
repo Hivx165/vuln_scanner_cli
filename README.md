@@ -1,6 +1,6 @@
 #Automated Vulnerability Scanner (CLI)
 
-Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, được thiết kế tối giản trên giao diện dòng lệnh (CLI). Dự án tập trung vào tính cơ động, khả năng tích hợp luồng kiểm thử liên tục (CI/CD Pipeline) và khả năng trích xuất dữ liệu lỗ hổng chuẩn quốc tế (Threat Intelligence).
+Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, được thiết kế tối giản trên giao diện dòng lệnh (CLI). Dự án tập trung vào tính cơ động, khả năng trích xuất dữ liệu lỗ hổng chuẩn quốc tế (Threat Intelligence).
 
 ## Tính năng nổi bật
 
@@ -9,17 +9,11 @@ Một công cụ rà quét và quản lý lỗ hổng bảo mật tự động, 
 * **Đánh giá rủi ro (Triage):** Tự động phân tích dữ liệu XML trong RAM, gán nhãn rủi ro (Critical, High, Medium) dựa trên điểm CVSS động hoặc ánh xạ cổng tĩnh.
 * **Lưu trữ Offline an toàn:** Sử dụng cơ sở dữ liệu `SQLite` nhúng trực tiếp, giúp hệ thống hoạt động độc lập 100% trong môi trường mạng cách ly (Air-gapped) mà không cần máy chủ ngoại vi.
 * **Bảo vệ hệ thống (Defensive Design):** Tích hợp bộ lọc Strict Input Validation bằng Regex, chặn đứng mọi nỗ lực tấn công OS Command Injection từ phía người dùng.
-* **CI/CD Readiness:** Xuất báo cáo cấu trúc chuẩn `JSON` phục vụ tự động hóa DevSecOps và `CSV` phục vụ báo cáo quản lý.
+* **CI/CD Readiness:** Xuất báo cáo cấu trúc chuẩn `JSON` và `CSV`
 
-## ⚙️ Yêu cầu hệ thống
+##  Cài đặt
 
-* **Hệ điều hành:** Linux (Khuyến nghị Ubuntu 24.04).
-* **Công cụ lõi:** Cài đặt sẵn `nmap` ở tầng hệ điều hành.
-* **Ngôn ngữ:** Python 3.10+ (Chỉ sử dụng Standard Library, không cần `pip install` thư viện ngoài).
-
-## 🛠️ Cài đặt
-
-Clone kho lưu trữ và sử dụng trực tiếp:
+Clone :
 
 git clone https://github.com/Hivx165/vuln_scanner_cli.git
 cd vuln_scanner_cli

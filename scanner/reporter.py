@@ -2,8 +2,8 @@ import json
 import csv
 
 def print_scan_results(target, open_ports, scan_id):
-    """Vẽ bảng ASCII kết quả quét bao gồm cột CVE và CVSS"""
-    print(f"\n[+] KẾT QUẢ QUÉT BẢO MẬT: {target} (Scan ID: {scan_id})")
+    """Vẽ bảng kết quả quét"""
+    print(f"\nKẾT QUẢ QUÉT BẢO MẬT: {target} (Scan ID: {scan_id})")
     print("-" * 85)
     print(f"{'Cổng (Port)':<12} | {'Dịch vụ (Service)':<20} | {'Mức độ':<10} | {'CVE ID':<15} | {'CVSS':<5}")
     print("-" * 85)
@@ -16,7 +16,6 @@ def print_scan_results(target, open_ports, scan_id):
             cve = p.get('cve_id', 'N/A')
             cvss = p.get('cvss_score', 'N/A')
             
-            # Ghi đè mức độ tĩnh nếu điểm CVSS thực tế lớn hơn 7.0
             if cvss != 'N/A' and float(cvss) >= 7.0:
                 severity = "Critical"
                 
@@ -28,7 +27,7 @@ def print_scan_results(target, open_ports, scan_id):
 def export_to_json(data, filename="report.json"):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
-    print(f"[+] Dữ liệu đã được nén thành công vào: {filename}")
+    print(f"Xuất thành công: {filename}")
 
 def export_to_csv(data, filename="report.csv"):
     if not data:
@@ -37,4 +36,5 @@ def export_to_csv(data, filename="report.csv"):
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader()
         writer.writerows(data)
-    print(f"[+] Dữ liệu đã được xuất thành công ra: {filename}")
+    print(f"Xuất thành công: {filename}")
+

@@ -35,7 +35,6 @@ def parse_nmap_xml(xml_data):
                 cve_data = []
                 for script in port_element.findall('script'):
                     output = script.get('output', '')
-                    # Bắt chuỗi dạng CVE-YYYY-XXXX và số điểm thập phân
                     matches = re.findall(r'(CVE-\d{4}-\d+).*?(\d+\.\d+)', output)
                     if matches:
                         cve_data.extend(matches)

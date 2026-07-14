@@ -4,7 +4,9 @@ from datetime import datetime
 DB_NAME = "vuln_data.db"
 
 def get_connection():
-    return sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row 
+    return conn
 
 def init_db():
     """Khởi tạo cơ sở dữ liệu với 3 bảng, bổ sung cột CVE và CVSS"""
@@ -131,3 +133,4 @@ def get_all_vulnerabilities():
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+

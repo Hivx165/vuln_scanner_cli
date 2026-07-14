@@ -22,7 +22,7 @@ def main():
             print(f"LỖI : target '{args.target}' không hợp lệ!")
             sys.exit(1)
 
-        print(f"[*] Khởi chạy quét target: {args.target} ({args.type})")
+        print(f"Khởi chạy quét target: {args.target} ({args.type})")
         target_id = add_target(args.target)
         scan_id = create_scan(target_id, status="RUNNING")
         
@@ -42,23 +42,23 @@ def main():
             print("Đã lưu toàn bộ báo cáo vào cơ sở dữ liệu cục bộ!")
         else:
             update_scan_status(scan_id, "FAILED")
-            print("[-] Quét thất bại hoặc mục tiêu không phản hồi.")
+            print("thất bại")
             
     elif args.command == "history":
-        print(f"[*] Lịch sử quét của: {args.target if args.target else 'Tất cả hệ thống'}")
+        print(f"Lịch sử quét của: {args.target if args.target else 'Tất cả hệ thống'}")
         records = get_history(args.target)
         if not records:
-            print("[-] Chưa có dữ liệu lịch sử nào.")
+            print("Chưa có dữ liệu lịch sử nào.")
         else:
             for rec in records:
                 print(f"[{rec['scan_date']}] IP: {rec['target_str']} | Trạng thái: {rec['status']} | Scan ID: {rec['scan_id']}")
 
     elif args.command == "export":
-        print(f"[*] Đang tổng hợp dữ liệu hệ thống để xuất định dạng: {args.format.upper()}")
+        print(f"Đang xuất: {args.format.upper()}")
         data = get_all_vulnerabilities()
         
         if not data:
-            print("[-] Cơ sở dữ liệu đang trống. Hãy chạy lệnh 'scan' trước khi xuất báo cáo!")
+            print("Db đang trống. Hãy Scan trước")
         elif args.format == 'json':
             export_to_json(data)
         elif args.format == 'csv':
@@ -66,3 +66,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
